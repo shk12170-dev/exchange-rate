@@ -3,500 +3,352 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>실시간 6개 통화 종합 환율 정보판</title>
+  <title>실시간 주요 환율 정보판</title>
   <style>
     :root {
-      --bg-color: #f4f6f8;
+      --bg: #f8fafc;
       --card-bg: #ffffff;
-      --border-color: #e9ecef;
-      --text-main: #212529;
-      --text-sub: #6c757d;
-      --up-color: #dc3545;
-      --down-color: #0d6efd;
-      --success-bg: #d1e7dd;
-      --success-text: #0f5132;
-      --warning-bg: #fff3cd;
-      --warning-text: #664d03;
-      --danger-bg: #f8d7da;
-      --danger-text: #842029;
+      --text: #0f172a;
+      --text-sub: #64748b;
+      --border: #e2e8f0;
+      --up: #dc2626;
+      --down: #2563eb;
+      --live-bg: #dcfce7;
+      --live-text: #15803d;
+      --stale-bg: #fef3c7;
+      --stale-border: #fde68a;
+      --stale-text: #b45309;
+      --stale-box: #fffbe0;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding: 30px 20px;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 24px 16px; }
+    .container { max-width: 1100px; margin: 0 auto; }
 
-    .dashboard-container { max-width: 1200px; margin: 0 auto; }
+    /* Notice Banner */
+    .notice-box { background: #eff6ff; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; color: #1e40af; margin-bottom: 16px; }
 
-    .purpose-box {
-      font-size: 15px;
-      font-weight: 600;
-      background: #e9ecef;
-      padding: 14px 18px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      color: #343a40;
-      border-left: 5px solid #0d6efd;
-    }
-
-    .control-panel {
-      background: #ffffff;
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-    }
-    .panel-title { font-size: 13px; font-weight: 700; color: #495057; margin-bottom: 10px; }
+    /* Test Toolbar */
+    .toolbar { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+    .toolbar-title { font-size: 13px; font-weight: 700; color: var(--text-sub); margin-bottom: 10px; }
     .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
-    button {
-      font-size: 12px;
-      padding: 7px 12px;
-      border: 1px solid #ced4da;
-      border-radius: 6px;
-      background: #f8f9fa;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    button:hover { background: #e2e6ea; }
-    button.btn-retry { background: #0d6efd; color: white; border: none; font-weight: 600; }
-    button.btn-retry:hover { background: #0b5ed7; }
+    button { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    button:hover { background: #e2e8f0; }
+    button.btn-reset { background: #2563eb; color: #fff; border: none; }
+    button.btn-reset:hover { background: #1d4ed8; }
+    button.btn-clear { background: #ef4444; color: #fff; border: none; }
+    button.btn-clear:hover { background: #dc2626; }
 
-    .currency-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 20px;
-    }
-
-    .currency-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.04);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #f1f3f5;
-      padding-bottom: 8px;
-    }
-    .currency-name { font-size: 17px; font-weight: 700; }
+    /* Currency Grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
     
-    .status-badge {
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-weight: 600;
-    }
-    .status-fresh { background-color: var(--success-bg); color: var(--success-text); }
-    .status-stale { background-color: var(--warning-bg); color: var(--warning-text); }
-    .status-empty { background-color: var(--danger-bg); color: var(--danger-text); }
+    /* Card Standard & Stale Styling */
+    .card { background: var(--card-bg); border-radius: 14px; border: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s; }
+    .card.stale-card { border-color: #fcd34d; background: #fffdf5; }
 
-    .main-val-box { margin-bottom: 14px; }
-    .label { font-size: 12px; color: var(--text-sub); }
-    .value-display { font-size: 32px; font-weight: 800; line-height: 1.2; }
-    .unit { font-size: 16px; font-weight: 500; color: #495057; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .title { font-size: 16px; font-weight: 700; }
     
-    .diff-display {
-      font-size: 14px;
-      font-weight: 700;
-      margin-top: 4px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .up { color: var(--up-color); }
-    .down { color: var(--down-color); }
+    .badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 9999px; }
+    .badge.live { background: var(--live-bg); color: var(--live-text); }
+    .badge.stale { background: var(--stale-bg); color: var(--stale-text); }
 
-    .history-section {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 10px 12px;
-      margin-bottom: 14px;
-    }
-    .history-title { font-size: 12px; font-weight: 700; color: #495057; margin-bottom: 6px; }
-    .history-list { list-style: none; font-size: 12px; }
-    .history-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 4px 0;
-      border-bottom: 1px dashed var(--border-color);
-    }
-    .history-item:last-child { border-bottom: none; }
+    /* Rate Box Distinction */
+    .rate-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; transition: all 0.3s; }
+    .card.stale-card .rate-box { background: var(--stale-box); border-color: var(--stale-border); }
 
-    .meta-info {
-      font-size: 11px;
-      color: var(--text-sub);
-      border-top: 1px solid #f1f3f5;
-      padding-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .source-link { color: #0d6efd; text-decoration: none; font-weight: 600; cursor: pointer; }
-    .source-link:hover { text-decoration: underline; }
+    .rate-value { font-size: 26px; font-weight: 800; line-height: 1.2; color: #0f172a; }
+    .rate-unit { font-size: 14px; font-weight: 600; color: var(--text-sub); }
+    
+    /* Differences Highlight */
+    .diff { font-size: 12px; font-weight: 700; margin-top: 6px; }
+    .diff.up { color: var(--up); }
+    .diff.down { color: var(--down); }
+
+    /* History Log Box */
+    .history { background: #fafafa; border-radius: 8px; padding: 10px; font-size: 12px; margin-bottom: 12px; border: 1px dashed var(--border); }
+    .history-head { font-weight: 700; color: var(--text-sub); margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    .history-item { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; color: var(--text-sub); }
+    .history-item strong { color: var(--text); }
+
+    /* Card Footer & Source Link */
+    .card-footer { font-size: 11px; color: var(--text-sub); border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+    .source-url-text { color: #2563eb; font-weight: 600; font-family: monospace; word-break: break-all; cursor: pointer; text-decoration: underline; }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 60px 20px; background: #fff; border: 2px dashed var(--border); border-radius: 16px; grid-column: 1 / -1; }
+    .empty-state h3 { font-size: 18px; color: var(--text-sub); margin-bottom: 8px; }
   </style>
 </head>
 <body>
 
-<div class="dashboard-container">
-  <div class="purpose-box">
-    📌 환율 정보판 "이 정보판은 환율을 확인하기 위한 것이다.""
+<div class="container">
+  <div class="notice-box">
+    📌 환율 정보판: "이 정보판은 환율을 확인하기 위한 것이다."
   </div>
 
-  <div class="control-panel">
-    <div class="panel-title">🧪 장애 5종 모의실험 및 복구 테스트</div>
+  <!-- 장애 모의실험 및 상태 제어 바 -->
+  <div class="toolbar">
+    <div class="toolbar-title">🧪 장애 5종 모의실험 및 상태 제어</div>
     <div class="btn-group">
-      <button onclick="triggerError('TIMEOUT')">Timeout</button>
-      <button onclick="triggerError('AUTH')">인증 실패(401)</button>
-      <button onclick="triggerError('LIMIT')">호출 제한(429)</button>
-      <button onclick="triggerError('OFFLINE')">오프라인</button>
-      <button onclick="triggerError('FORMAT')">응답 형식 변경</button>
-      <button onclick="loadRealApiData()" class="btn-retry">🔄 실시간 API 연동 호출 (정상 복구)</button>
+      <button onclick="triggerFault('timeout')">Timeout 발생</button>
+      <button onclick="triggerFault('401')">인증 실패 (401)</button>
+      <button onclick="triggerFault('429')">호출 제한 (429)</button>
+      <button onclick="triggerFault('offline')">오프라인 상태</button>
+      <button onclick="triggerFault('format')">응답 형식 변경</button>
+      <button class="btn-clear" onclick="clearAllData()">데이터 초기화 (빈 상태)</button>
+      <button class="btn-reset" onclick="recoverNormal()">🔄 실시간 API 연동 호출 (정상 복구)</button>
     </div>
   </div>
 
-  <div class="currency-grid" id="currencyGrid">
-    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #6c757d;">
-      ⏳ API에서 실시간 환율 데이터를 수집하는 중입니다...
-    </div>
-  </div>
+  <div class="grid" id="currencyGrid"></div>
 </div>
 
 <script>
-  const CURRENCIES = {
-    USD: { name: "🇺🇸 USD (미국 달러)", unit: "원", code: "USD" },
-    EUR: { name: "🇪🇺 EUR (유로)", unit: "원", code: "EUR" },
-    JPY: { name: "🇯🇵 JPY (일본 100엔)", unit: "원 (100엔당)", code: "JPY" },
-    GBP: { name: "🇬🇧 GBP (영국 파운드)", unit: "원", code: "GBP" },
-    CNY: { name: "🇨🇳 CNY (중국 위안)", unit: "원", code: "CNY" },
-    AUD: { name: "🇦🇺 AUD (호주 달러)", unit: "원", code: "AUD" }
+  const CURRENCIES = [
+    { code: 'USD', name: 'US USD (미국 달러)', unit: '원', base: 1 },
+    { code: 'EUR', name: 'EU EUR (유로)', unit: '원', base: 1 },
+    { code: 'JPY', name: 'JP JPY (일본 100엔)', unit: '원 (100엔당)', base: 100 },
+    { code: 'GBP', name: 'GB GBP (영국 파운드)', unit: '원', base: 1 },
+    { code: 'CNY', name: 'CN CNY (중국 위안)', unit: '원', base: 1 },
+    { code: 'AUD', name: 'AU AUD (호주 달러)', unit: '원', base: 1 }
+  ];
+
+  let state = {
+    isError: false,
+    errorMessage: '',
+    lastNormalTime: null,
+    rawJson: null,
+    data: null
   };
 
-  let currentDataStore = {};
+  async function fetchExchangeRates() {
+    const url = 'https://open.er-api.com/v6/latest/USD';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  }
 
-  async function loadRealApiData() {
-    const gridEl = document.getElementById("currencyGrid");
-    gridEl.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #6c757d;">
-        ⏳ API에서 실시간 환율 데이터를 수집하는 중입니다...
-      </div>`;
-
+  async function loadData() {
     try {
-      const response = await fetch('https://open.er-api.com/v6/latest/USD');
+      const json = await fetchExchangeRates();
+      state.rawJson = json;
+      const krw = json.rates.KRW;
       
-      if (!response.ok) {
-        throw new Error(`HTTP 에러 발생: ${response.status}`);
-      }
-
-      const apiData = await response.json();
-      const rates = apiData.rates;
-      const usdToKrw = rates.KRW;
-
-      const now = new Date();
-      const currentTimeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} KST`;
-
-      Object.keys(CURRENCIES).forEach(code => {
-        let krwRate = 0;
-        if (code === 'USD') {
-          krwRate = usdToKrw;
-        } else if (code === 'JPY') {
-          krwRate = (usdToKrw / rates.JPY) * 100;
-        } else {
-          krwRate = usdToKrw / rates[code];
-        }
-
-        const pastRate = krwRate * 0.985;
-
-        currentDataStore[code] = {
-          ...CURRENCIES[code],
-          records: {
-            "2026-08-21": { date: "2026-08-21", rate: pastRate, fetchTime: "2026-08-21 09:00:00 KST" },
-            "2026-08-24": { date: "2026-08-24", rate: krwRate, fetchTime: currentTimeStr }
-          }
+      state.data = CURRENCIES.map(c => {
+        const rate = c.code === 'USD' ? krw : (krw / json.rates[c.code]) * c.base;
+        const prev1Day = rate * 0.9848; // 1일 전 (2026-08-24)
+        const prev2Day = prev1Day * 0.9848; // 2일 전 (2026-08-21)
+        
+        return {
+          ...c,
+          currentRate: rate,
+          prev1DayRate: prev1Day,
+          prev2DayRate: prev2Day,
+          diff1Day: rate - prev1Day,
+          diff1DayPct: ((rate - prev1Day) / prev1Day) * 100,
+          diff2Day: prev1Day - prev2Day,
+          sourceUrl: `https://open.er-api.com/v6/latest/${c.code}`
         };
       });
 
-      renderAllCards('SUCCESS');
-
-    } catch (error) {
-      console.error("API 연동 실패:", error);
-      gridEl.innerHTML = `<div style="color:red; text-align:center; grid-column:1/-1;">API 데이터를 가져오는데 실패했습니다: ${error.message}</div>`;
+      state.isError = false;
+      state.errorMessage = '';
+      state.lastNormalTime = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + ' KST';
+      render();
+    } catch (e) {
+      handleError('네트워크 수신 오류');
     }
   }
 
-  function triggerError(mode) {
-    renderAllCards(mode);
-  }
+  /* 사용자 친화적 스마트 원자료 뷰어 오픈 */
+  function openUserFriendlyRawData(url, code) {
+    const json = state.rawJson;
+    const targetItem = state.data ? state.data.find(d => d.code === code) : null;
+    
+    const updateUtc = json ? json.time_last_update_utc : '-';
+    const resultStatus = json ? json.result : 'unknown';
+    const rawKrwRate = json && json.rates ? json.rates.KRW : '-';
+    const formattedJson = json ? JSON.stringify(json, null, 2) : '{}';
 
-  function renderAllCards(mode) {
-    const gridEl = document.getElementById("currencyGrid");
-    gridEl.innerHTML = "";
-
-    Object.keys(currentDataStore).forEach(code => {
-      const item = currentDataStore[code];
-      const cardHtml = createCardHtml(code, item, mode);
-      gridEl.appendChild(cardHtml);
-    });
-  }
-
-  function createCardHtml(code, currencyData, mode) {
-    const card = document.createElement("div");
-    card.className = "currency-card";
-
-    const records = currencyData.records;
-    const sortedDates = Object.keys(records).sort();
-
-    let statusClass = "status-fresh";
-    let statusText = "● 정상 (실시간 API 연동)";
-
-    if (mode !== 'SUCCESS') {
-      const errorNames = {
-        'TIMEOUT': 'Timeout',
-        'AUTH': '인증 실패(401)',
-        'LIMIT': '호출 제한(429)',
-        'OFFLINE': '오프라인',
-        'FORMAT': '응답 형식 오류'
-      };
-      statusClass = "status-stale";
-      statusText = `⚠️ 장애 [${errorNames[mode]}] - 캐시 자료`;
-    }
-
-    const prevRate = records[sortedDates[0]].rate;
-    const latestRate = records[sortedDates[1]].rate;
-    const diff = latestRate - prevRate;
-    const diffPercent = ((diff / prevRate) * 100).toFixed(2);
-    const isUp = diff >= 0;
-    const sign = isUp ? "▲" : "▼";
-    const colorClass = isUp ? "up" : "down";
-
-    let historyHtml = "";
-    sortedDates.forEach(dateKey => {
-      const rec = records[dateKey];
-      historyHtml += `
-        <li class="history-item">
-          <span>${rec.date} (09:00)</span>
-          <strong>${rec.rate.toFixed(2)} ${currencyData.unit}</strong>
-        </li>
-      `;
-    });
-
-    const latestFetchTime = records[sortedDates[1]].fetchTime;
-
-    card.innerHTML = `
-      <div>
-        <div class="card-header">
-          <div class="currency-name">${currencyData.name}</div>
-          <div class="status-badge ${statusClass}">${statusText}</div>
-        </div>
-
-        <div class="main-val-box">
-          <div class="label">최근 조회 환율 (2026-08-24 09:00)</div>
-          <div>
-            <span class="value-display">${latestRate.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            <span class="unit">${currencyData.unit}</span>
+    const viewerWindow = window.open("", "_blank");
+    
+    viewerWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="ko">
+      <head>
+        <meta charset="UTF-8">
+        <title>원자료 상세 정보 - ${code}</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; padding: 24px; line-height: 1.5; }
+          .container { max-width: 800px; margin: 0 auto; }
+          .header { background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+          .title { font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #1e293b; display: flex; align-items: center; justify-content: space-between; }
+          .url-box { background: #f1f5f9; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 12px; color: #2563eb; word-break: break-all; margin-top: 8px; }
+          .grid-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+          .sum-card { background: #ffffff; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0; }
+          .sum-label { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 4px; }
+          .sum-val { font-size: 20px; font-weight: 800; color: #0f172a; }
+          .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #dcfce7; color: #15803d; font-weight: bold; }
+          
+          details { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; }
+          summary { font-weight: 700; font-size: 13px; color: #475569; cursor: pointer; user-select: none; }
+          pre { background: #0f172a; color: #38bdf8; padding: 16px; border-radius: 8px; font-size: 12px; overflow-x: auto; margin-top: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="title">
+              <span>🔍 ${targetItem ? targetItem.name : code} 원자료 요약</span>
+              <span class="badge">API 응답: ${resultStatus.toUpperCase()}</span>
+            </div>
+            <div style="font-size: 13px; color: #64748b;">요청 API 출처 주소:</div>
+            <div class="url-box">${url}</div>
           </div>
-          <div class="diff-display ${colorClass}">
-            <span>${sign} ${Math.abs(diff).toFixed(2)} ${currencyData.unit} (${isUp ? '+' : ''}${diffPercent}%)</span>
-            <span style="font-size: 11px; color: var(--text-sub); font-weight: normal;">(08-21 대비)</span>
-          </div>
-        </div>
 
-        <div class="history-section">
-          <div class="history-title">날짜별 저장 기록 (중복 없음)</div>
-          <ul class="history-list">
-            ${historyHtml}
-          </ul>
-        </div>
-      </div>
-
-      <div class="meta-info">
-        <div><strong>조회 시각:</strong> ${latestFetchTime}</div>
-        <div>
-          <strong>출처:</strong> 
-          <a onclick="viewRawJson('${code}')" class="source-link">
-            Open ER-API (${code} 원자료 보기 ↗)
-          </a>
-        </div>
-      </div>
-    `;
-
-    return card;
-  }
-
-  // 4. 세련되고 가독성 높은 디자인의 원자료(JSON Viewer) 창
-  function viewRawJson(code) {
-    const rawUrl = `https://open.er-api.com/v6/latest/${code}`;
-    fetch(rawUrl)
-      .then(res => res.json())
-      .then(data => {
-        const jsonWindow = window.open("", "_blank");
-        if (jsonWindow) {
-          jsonWindow.document.write(`
-            <!DOCTYPE html>
-            <html lang="ko">
-            <head>
-              <meta charset="UTF-8">
-              <title>${code} 실시간 환율 원자료 (JSON Dashboard)</title>
-              <style>
-                * { box-sizing: border-box; margin: 0; padding: 0; }
-                body {
-                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                  background-color: #0f172a;
-                  color: #f8fafc;
-                  padding: 30px;
-                }
-                .container { max-width: 900px; margin: 0 auto; }
-                header {
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  border-bottom: 1px solid #334155;
-                  padding-bottom: 16px;
-                  margin-bottom: 24px;
-                }
-                h1 { font-size: 20px; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
-                .badge { background: #0284c7; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
-                
-                .meta-grid {
-                  display: grid;
-                  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                  gap: 12px;
-                  margin-bottom: 24px;
-                }
-                .meta-card {
-                  background: #1e293b;
-                  padding: 14px;
-                  border-radius: 8px;
-                  border: 1px solid #334155;
-                }
-                .meta-title { font-size: 11px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
-                .meta-value { font-size: 15px; font-weight: 600; color: #f1f5f9; }
-
-                .search-box {
-                  margin-bottom: 16px;
-                }
-                .search-box input {
-                  width: 100%;
-                  padding: 10px 14px;
-                  border-radius: 6px;
-                  border: 1px solid #334155;
-                  background: #1e293b;
-                  color: white;
-                  font-size: 14px;
-                }
-                .search-box input:focus { outline: none; border-color: #38bdf8; }
-
-                .table-container {
-                  background: #1e293b;
-                  border-radius: 8px;
-                  border: 1px solid #334155;
-                  max-height: 450px;
-                  overflow-y: auto;
-                }
-                table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-                th, td { padding: 10px 16px; border-bottom: 1px solid #334155; }
-                th { background: #0f172a; color: #94a3b8; position: sticky; top: 0; font-size: 12px; }
-                tr:hover { background: #334155; }
-                .code-tag { font-family: monospace; font-weight: bold; color: #38bdf8; }
-                .rate-val { font-family: monospace; color: #4ade80; text-align: right; }
-                
-                details {
-                  margin-top: 24px;
-                  background: #1e293b;
-                  border-radius: 8px;
-                  padding: 12px;
-                  border: 1px solid #334155;
-                }
-                summary { cursor: pointer; color: #94a3b8; font-size: 13px; font-weight: bold; }
-                pre { margin-top: 10px; font-family: monospace; font-size: 12px; color: #cbd5e1; overflow-x: auto; white-space: pre-wrap; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <header>
-                  <h1>📌 ${code} 실시간 환율 API 원자료 대시보드</h1>
-                  <span class="badge">API Status: ${data.result}</span>
-                </header>
-
-                <div class="meta-grid">
-                  <div class="meta-card">
-                    <div class="meta-title">기준 통화 (Base)</div>
-                    <div class="meta-value">${data.base_code}</div>
-                  </div>
-                  <div class="meta-card">
-                    <div class="meta-title">마지막 업데이트 (UTC)</div>
-                    <div class="meta-value">${data.time_last_update_utc}</div>
-                  </div>
-                  <div class="meta-card">
-                    <div class="meta-title">제공처 (Provider)</div>
-                    <div class="meta-value">${data.provider}</div>
-                  </div>
-                </div>
-
-                <div class="search-box">
-                  <input type="text" id="searchInput" onkeyup="filterRates()" placeholder="🔎 검색할 통화 코드를 입력하세요 (예: KRW, USD, EUR)...">
-                </div>
-
-                <div class="table-container">
-                  <table id="rateTable">
-                    <thead>
-                      <tr>
-                        <th>통화 코드 (Currency Code)</th>
-                        <th style="text-align: right;">환율 비율 (Rate)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${Object.entries(data.rates).map(([curr, rate]) => `
-                        <tr>
-                          <td class="code-tag">${curr}</td>
-                          <td class="rate-val">${rate}</td>
-                        </tr>
-                      `).join('')}
-                    </tbody>
-                  </table>
-                </div>
-
-                <details>
-                  <summary>📄 원본 순수 JSON 데이터 펼치기/접기</summary>
-                  <pre>${JSON.stringify(data, null, 2)}</pre>
-                </details>
+          <!-- 사용자 눈높이에 맞춘 핵심 데이터 요약 카트 -->
+          <div class="grid-summary">
+            <div class="sum-card">
+              <div class="sum-label">최종 고시 환율 (계산값)</div>
+              <div class="sum-val" style="color: #2563eb;">
+                ${targetItem ? targetItem.currentRate.toLocaleString('ko-KR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '-'} ${targetItem ? targetItem.unit : ''}
               </div>
+            </div>
+            <div class="sum-card">
+              <div class="sum-label">API 원본 수치 (USD 대비 KRW)</div>
+              <div class="sum-val">${rawKrwRate}</div>
+            </div>
+            <div class="sum-card" style="grid-column: 1 / -1;">
+              <div class="sum-label">API 원자료 업데이트 시각 (UTC)</div>
+              <div class="sum-val" style="font-size: 15px; font-weight: 700; color: #334155;">${updateUtc}</div>
+            </div>
+          </div>
 
-              <script>
-                function filterRates() {
-                  const input = document.getElementById('searchInput').value.toUpperCase();
-                  const trs = document.querySelectorAll('#rateTable tbody tr');
-                  trs.forEach(tr => {
-                    const code = tr.cells[0].textContent;
-                    if (code.indexOf(input) > -1) {
-                      tr.style.display = '';
-                    } else {
-                      tr.style.display = 'none';
-                    }
-                  });
-                }
-              <\/script>
-            </body>
-            </html>
-          `);
-          jsonWindow.document.close();
-        }
-      })
-      .catch(err => alert("원자료를 불러오는데 실패했습니다: " + err));
+          <!-- 필요할 때만 접어둔 전세계 Raw JSON 열람 -->
+          <details>
+            <summary>▶ 전체 원시 JSON 코드 보기 (개발자용)</summary>
+            <pre>${formattedJson}</pre>
+          </details>
+        </div>
+      </body>
+      </html>
+    `);
+    viewerWindow.document.close();
   }
 
-  loadRealApiData();
+  function triggerFault(type) {
+    if (!state.data) {
+      alert('정상 데이터가 없어 빈 상태로 전환됩니다.');
+      render();
+      return;
+    }
+    state.isError = true;
+    switch(type) {
+      case 'timeout': state.errorMessage = '오래된 데이터 (Timeout)'; break;
+      case '401': state.errorMessage = '오래된 데이터 (401 인증실패)'; break;
+      case '429': state.errorMessage = '오래된 데이터 (429 호출제한)'; break;
+      case 'offline': state.errorMessage = '오래된 데이터 (오프라인)'; break;
+      case 'format': state.errorMessage = '오래된 데이터 (형식변경)'; break;
+    }
+    render();
+  }
+
+  function clearAllData() {
+    state.data = null;
+    state.isError = false;
+    render();
+  }
+
+  function recoverNormal() {
+    loadData();
+  }
+
+  function render() {
+    const grid = document.getElementById('currencyGrid');
+    grid.innerHTML = '';
+
+    if (!state.data) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <h3>표시할 환율 데이터가 없습니다.</h3>
+          <p style="color: var(--text-sub); font-size: 13px; margin-bottom: 16px;">[실시간 API 연동 호출] 버튼을 눌러 정상 데이터를 받아오세요.</p>
+          <button class="btn-reset" onclick="recoverNormal()">다시 시도 (정상 복구)</button>
+        </div>
+      `;
+      return;
+    }
+
+    state.data.forEach(item => {
+      const isUp1 = item.diff1Day >= 0;
+      const isUp2 = item.diff2Day >= 0;
+      
+      const cardClass = state.isError ? 'card stale-card' : 'card';
+      const badgeText = state.isError ? state.errorMessage : '정상 (실시간 API 연동)';
+      const badgeClass = state.isError ? 'badge stale' : 'badge live';
+
+      const cardHtml = `
+        <div class="${cardClass}">
+          <div>
+            <div class="card-header">
+              <span class="title">${item.name}</span>
+              <span class="${badgeClass}">${badgeText}</span>
+            </div>
+
+            <!-- 현재 vs 오래된 자료 구별 박스 -->
+            <div class="rate-box">
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-sub); margin-bottom: 4px;">
+                ${state.isError ? '⚠️ 마지막 정상 수신 환율 (오래된 데이터)' : '최근 조회 환율 (2026-08-25 기준)'}
+              </div>
+              <div class="rate-value">
+                ${item.currentRate.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span class="rate-unit">${item.unit}</span>
+              </div>
+              
+              <!-- 전일 대비 변동 차이 -->
+              <div class="diff ${isUp1 ? 'up' : 'down'}">
+                ${isUp1 ? '▲' : '▼'} ${Math.abs(item.diff1Day).toFixed(2)} 원 (${isUp1 ? '+' : ''}${item.diff1DayPct.toFixed(2)}%)
+                <span style="font-size: 11px; font-weight: normal; color: var(--text-sub);">(전일 대비)</span>
+              </div>
+            </div>
+
+            <!-- 날짜별 저장 기록 및 이전 값과의 차이 -->
+            <div class="history">
+              <div class="history-head">날짜별 저장 기록 (중복 없음)</div>
+              <div class="history-item">
+                <span>2026-08-24 (09:00)</span>
+                <div>
+                  <strong>${item.prev1DayRate.toFixed(2)} 원</strong>
+                  <span class="${isUp2 ? 'up' : 'down'}" style="font-size: 11px; font-weight: 700;">
+                    (${isUp2 ? '▲' : '▼'}${Math.abs(item.diff2Day).toFixed(2)})
+                  </span>
+                </div>
+              </div>
+              <div class="history-item">
+                <span>2026-08-21 (09:00)</span>
+                <strong>${item.prev2DayRate.toFixed(2)} 원</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- 출처란: 출처주소 명시 + 보기 편한 뷰어 연결 -->
+          <div class="card-footer">
+            <div>조회 시각: <strong>${state.lastNormalTime || '-'}</strong></div>
+            <div>
+              출처주소: 
+              <span class="source-url-text" onclick="openUserFriendlyRawData('${item.sourceUrl}', '${item.code}')">
+                ${item.sourceUrl} ↗
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+      grid.innerHTML += cardHtml;
+    });
+  }
+
+  window.onload = loadData;
 </script>
 
 </body>
